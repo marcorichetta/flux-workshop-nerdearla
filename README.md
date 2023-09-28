@@ -60,7 +60,7 @@ flux bootstrap github \
   --repository=flux-workshop-nerdearla \
   --branch=main \
   --path=./clusters/dev \
-  --personal
+  --personal \
   --read-write-key
 ```
 
