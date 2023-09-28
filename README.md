@@ -61,6 +61,7 @@ flux bootstrap github \
   --branch=main \
   --path=./clusters/dev \
   --personal
+  --read-write-key
 ```
 
 <details>
@@ -101,11 +102,200 @@ Traerse los manifiestos commiteados por flux
 ```bash
 git pull
 
-ls --tree clusters
- clusters
-└──  dev
-    └──  flux-system
-        ├──  gotk-components.yaml
-        ├──  gotk-sync.yaml
-        └──  kustomization.yaml
+lsd --tree clusters
+clusters
+└── dev
+    └── flux-system
+        ├── gotk-components.yaml
+        ├── gotk-sync.yaml
+        └── kustomization.yaml
+```
+
+### Suspender flux
+
+```bash
+flux suspend source git flux-system -n flux-system
+```
+
+## Approach tradicional
+
+Crear apps con kubectl
+
+```bash
+kubectl apply -R -f apps/dev
+
+kubectl get svc -n podinfo
+
+kubectl port-forward svc/frontend -n podinfo 8000:9898
+
+kubectl get all -n podinfo
+
+kubectl edit -n podinfo deploy/frontend
+
+kubectl get all -n podinfo
+```
+
+## Gitops way
+
+Crear namespace podinfo
+
+```yaml
+# apps/podinfo/namespace.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+    name: podinfo
+```
+
+---
+
+Crear kustomization
+
+```bash
+flux create kustomization apps \
+  --source=flux-system \
+  --path="./apps/dev" \
+  --prune=true \
+  --interval=5m \
+  --export > ./clusters/dev/apps.yaml
+```
+
+---
+
+## Forzar reconciliación de flux
+
+```bash
+flux reconcile kustomization apps --with-source
+```
+
+## Dashboard
+
+Flux UI - https://github.com/weaveworks/weave-gitops
+
+**Crear kustomization para notificar a Flux del dashboard**
+
+```bash
+flux create kustomization infra \
+--source=flux-system \
+--path="./infrastructure" \
+--prune=true \
+--interval=1h \
+--export > ./clusters/dev/infrastructure.yaml
+
+# Port forward para ingresar localmente
+kubectl port-forward svc/weave-gitops -n flux-system 9001:9001
+```
+
+## Image automation
+
+**Agregar image automation y reflector controllers**
+
+```bash
+flux bootstrap github \
+  --components-extra=image-reflector-controller,image-automation-controller \
+  --owner=$GITHUB_USER \
+  --repository=flux-workshop-nerdearla \
+  --branch=main \
+  --path=./clusters/dev \
+  --personal
+```
+
+> Note ⚠️
+
+`git pull` para traerse los cambios que pusheo `flux`
+
+### Configurar image scanning
+
+```bash
+mkdir ./clusters/dev/images/
+
+flux create image repository podinfo \
+--image=ghcr.io/stefanprodan/podinfo \
+--interval=5m \
+--export > ./clusters/dev/images/podinfo-registry.yaml
+```
+
+Crear la policy a ser aplicada por Flux
+
+```bash
+flux create image policy podinfo \
+--image-ref=podinfo \
+--select-semver=">=5.0.x" \
+--export > ./clusters/dev/images/podinfo-policy.yaml
+```
+
+### Image update automation
+
+Conectar policy con app
+
+```yaml
+# deployment.yaml
+
+spec:
+    containers:
+        - name: frontend
+          image: ghcr.io/stefanprodan/podinfo:5.0.0 # {"$imagepolicy": "flux-system:podinfo"}
+```
+
+Crear update automation
+
+```bash
+flux create image update flux-system \
+--interval=30m \
+--git-repo-ref=flux-system \
+--git-repo-path="./apps/dev" \
+--checkout-branch=main \
+--push-branch=main \
+--author-name=fluxcdbot \
+--author-email=fluxcdbot@users.noreply.github.com \
+--commit-template="{{range .Updated.Images}}{{println .}}{{end}}" \
+--export > ./clusters/dev/flux-system-automation.yaml
+```
+
+### Reproducibility
+
+```bash
+# Delete cluster
+kind delete cluster -n flux-demo
+
+# Recreate it
+kind create cluser -n new-flux-demo
+
+# Reboot flux
+flux bootstrap github \
+  --components-extra=image-reflector-controller,image-automation-controller \
+  --owner=$GITHUB_USER \
+  --repository=flux-workshop-nerdearla \
+  --branch=main \
+  --path=./clusters/dev \
+  --personal \
+  --read-write-key
+
+kubectl port-forward svc/weave-gitops -n flux-system 9001:9001
+```
+
+### Notificaciones
+
+**Crear provider**
+
+```bash
+mkdir ./clusters/dev/notifications
+
+flux create alert-provider generic --type generic --export > ./clusters/dev/notifications/provider.yaml
+```
+
+**Crear alert**
+
+```bash
+flux create alert generic-alert \
+  --event-severity info \
+  --event-source Kustomization/flux-system \
+  --provider-ref generic \
+  --export > ./clusters/dev/notifications/alert.yaml
+```
+
+Simplest web server
+
+```bash
+while true; do (echo -ne "HTTP/1.1 200 OK\r\n\r\n"; cat) | nc -l -p 9999; done
 ```
