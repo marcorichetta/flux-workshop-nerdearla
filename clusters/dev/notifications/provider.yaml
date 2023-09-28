@@ -6,4 +6,5 @@ metadata:
   namespace: flux-system
 spec:
   type: generic
+  address: http://localhost:9999
   
