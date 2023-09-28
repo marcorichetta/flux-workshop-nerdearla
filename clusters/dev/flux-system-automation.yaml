@@ -21,5 +21,5 @@ spec:
     kind: GitRepository
     name: flux-system
   update:
-    path: ./clusters/dev
+    path: ./apps/dev
     strategy: Setters
