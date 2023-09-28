@@ -274,6 +274,33 @@ flux bootstrap github \
 kubectl port-forward svc/weave-gitops -n flux-system 9001:9001
 ```
 
+## Sealed secrets - https://github.com/bitnami-labs/sealed-secrets
+
+Problem: "I can manage all my K8s config in git, except Secrets."
+
+Sealed Secrets: _"Hold my beer"_
+
+```bash
+mkdir ./clusters/dev/sealed-secrets
+
+flux create source helm sealed-secrets \
+    --url=https://bitnami-labs.github.io/sealed-secrets \
+    --interval=10m \
+    --export > ./clusters/dev/sealed-secrets/source.yaml
+
+flux create helmrelease sealed-secrets \
+    --interval=1h \
+    --release-name=sealed-secrets-controller \
+    --target-namespace=flux-system \
+    --source=HelmRepository/sealed-secrets \
+    --chart=sealed-secrets \
+    --chart-version=">=1.15.0-0 <2.0.0" \
+    --crds=CreateReplace \
+    --export > ./clusters/dev/sealed-secrets/helmrelease.yaml
+```
+
+### Git Push
+
 ### Notificaciones
 
 **Crear provider**
