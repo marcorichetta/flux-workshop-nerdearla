@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
-  namespace: test
+  namespace: podinfo
 spec:
   replicas: 2
   minReadySeconds: 3
