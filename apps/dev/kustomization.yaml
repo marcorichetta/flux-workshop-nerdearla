@@ -6,7 +6,3 @@ resources:
 - ./podinfo/namespace.yaml
 - ./podinfo/deployment.yaml
 - ./podinfo/service.yaml
-
-images:
-  - name: ghcr.io/stefanprodan/podinfo
-    newTag: 0.0.0 # {"$imagepolicy": "flux-system:podinfo"}
