@@ -6,3 +6,4 @@ resources:
 - ./podinfo/namespace.yaml
 - ./podinfo/deployment.yaml
 - ./podinfo/service.yaml
+- ./podinfo/sealed-secret.yaml

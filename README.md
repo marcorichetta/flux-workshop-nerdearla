@@ -299,6 +299,48 @@ flux create helmrelease sealed-secrets \
     --export > ./clusters/dev/sealed-secrets/helmrelease.yaml
 ```
 
+Obtener la Public Key para crear secrets
+
+```bash
+kubeseal --fetch-cert \
+    --controller-name=sealed-secrets-controller \
+    --controller-namespace=flux-system \
+    > ./clusters/dev/sealed-secrets/pub-sealed-secrets.pem
+```
+
+Crear Secret
+
+```bash
+kubectl -n default create secret generic SECRET_KEY \
+    --from-literal=password=super_secret_key \
+    --dry-run=client \
+    -o yaml > apps/dev/podinfo/secret.yaml
+```
+
+Crear Sealed Secret
+
+```bash
+kubeseal --scope cluster-wide \
+    --format=yaml \
+    --cert=./clusters/dev/sealed-secrets/pub-sealed-secrets.pem \
+    -f apps/dev/podinfo/secret.yaml \
+    -w apps/dev/podinfo/sealed-secret.yaml
+```
+
+Agregar env en deployment.yaml y agregarlo en kustomization.yaml
+
+```yaml
+# deployment.yaml
+- name: SECRET_KEY
+  valueFrom:
+      secretKeyRef:
+          key: SECRET_KEY
+
+# kustomization.yaml
+resources:
+- ./podinfo/sealed-secret.yaml
+```
+
 ### Git Push
 
 ### Notificaciones

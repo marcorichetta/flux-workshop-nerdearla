@@ -1,1 +1,3 @@
+# do not upload plain secrets
 .env
+secret.yaml
