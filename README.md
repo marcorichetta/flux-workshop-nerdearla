@@ -25,7 +25,7 @@ colima start --kubernetes --cpu 4 --memory 8 --profile flux-demo
 kind create cluster --name flux-demo
 ```
 
-Check la creación del cluster
+**Check la creación del cluster**
 
 ```bash
 kubectl get nodes --watch
@@ -135,9 +135,15 @@ kubectl edit -n podinfo deploy/frontend
 kubectl get all -n podinfo
 ```
 
+### Suspender flux
+
+```bash
+flux resume source git flux-system -n flux-system
+```
+
 ## Gitops way
 
-Crear namespace podinfo
+**Crear namespace podinfo**
 
 ```yaml
 # apps/podinfo/namespace.yaml
@@ -149,7 +155,7 @@ metadata:
 
 ---
 
-Crear kustomization
+**Crear kustomization**
 
 ```bash
 flux create kustomization apps \
@@ -162,15 +168,13 @@ flux create kustomization apps \
 
 ---
 
-## Forzar reconciliación de flux
+## Forzar reconciliación de Flux 💡
 
 ```bash
 flux reconcile kustomization apps --with-source
 ```
 
-## Dashboard
-
-Flux UI - https://github.com/weaveworks/weave-gitops
+## Flux UI - https://github.com/weaveworks/weave-gitops
 
 **Crear kustomization para notificar a Flux del dashboard**
 
@@ -215,7 +219,7 @@ flux create image repository podinfo \
 --export > ./clusters/dev/images/podinfo-registry.yaml
 ```
 
-Crear la policy a ser aplicada por Flux
+#### Crear la policy a ser aplicada por Flux
 
 ```bash
 flux create image policy podinfo \
@@ -226,7 +230,7 @@ flux create image policy podinfo \
 
 ### Image update automation
 
-Conectar policy con app
+#### Conectar policy con app
 
 ```yaml
 # deployment.yaml
@@ -237,7 +241,7 @@ spec:
           image: ghcr.io/stefanprodan/podinfo:5.0.0 # {"$imagepolicy": "flux-system:podinfo"}
 ```
 
-Crear update automation
+#### Crear update automation
 
 ```bash
 flux create image update flux-system \
@@ -252,16 +256,28 @@ flux create image update flux-system \
 --export > ./clusters/dev/flux-system-automation.yaml
 ```
 
-### Reproducibility
+## Reproducibility
+
+#### Borrar cluster
 
 ```bash
-# Delete cluster
 kind delete cluster -n flux-demo
 
-# Recreate it
+colima stop --profile oreilly-kubernetes
+colima delete --profile oreilly-kubernetes
+```
+
+#### Recrearlos
+
+```bash
 kind create cluser -n new-flux-demo
 
-# Reboot flux
+colima start --kubernetes --cpu 4 --memory 8 --profile new-oreilly-kubernetes
+```
+
+#### Reboot Flux
+
+```bash
 flux bootstrap github \
   --components-extra=image-reflector-controller,image-automation-controller \
   --owner=$GITHUB_USER \
@@ -276,9 +292,10 @@ kubectl port-forward svc/weave-gitops -n flux-system 9001:9001
 
 ## Sealed secrets - https://github.com/bitnami-labs/sealed-secrets
 
-Problem: "I can manage all my K8s config in git, except Secrets."
+> Problem: "I can manage all my K8s config in git, except Secrets."
+> Sealed Secrets: _"Hold my beer"_
 
-Sealed Secrets: _"Hold my beer"_
+#### Instalar Sealed Secrets Controller
 
 ```bash
 mkdir ./clusters/dev/sealed-secrets
@@ -299,7 +316,7 @@ flux create helmrelease sealed-secrets \
     --export > ./clusters/dev/sealed-secrets/helmrelease.yaml
 ```
 
-Obtener la Public Key para crear secrets
+#### Obtener la Public Key para crear secrets
 
 ```bash
 kubeseal --fetch-cert \
@@ -308,7 +325,7 @@ kubeseal --fetch-cert \
     > ./clusters/dev/sealed-secrets/pub-sealed-secrets.pem
 ```
 
-Crear Secret
+**Crear Secret**
 
 ```bash
 kubectl -n default create secret generic podinfo-secret \
@@ -317,7 +334,7 @@ kubectl -n default create secret generic podinfo-secret \
     -o yaml > apps/dev/podinfo/secret.yaml
 ```
 
-Crear Sealed Secret
+**Crear Sealed Secret**
 
 ```bash
 kubeseal --scope cluster-wide \
@@ -327,7 +344,7 @@ kubeseal --scope cluster-wide \
     -w apps/dev/podinfo/sealed-secret.yaml
 ```
 
-Agregar env en deployment.yaml y agregarlo en kustomization.yaml
+**Agregar env en deployment.yaml y agregarlo en kustomization.yaml**
 
 ```yaml
 # deployment.yaml
@@ -366,10 +383,4 @@ flux create alert generic-alert \
   --event-source Kustomization/flux-system \
   --provider-ref generic \
   --export > ./clusters/dev/notifications/alert.yaml
-```
-
-Simplest web server
-
-```bash
-while true; do (echo -ne "HTTP/1.1 200 OK\r\n\r\n"; cat) | nc -l -p 9999; done
 ```
