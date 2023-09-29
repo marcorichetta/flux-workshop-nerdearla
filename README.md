@@ -4,6 +4,9 @@ Este repo es complementario al workshop "Introducción a GitOps con Flux", dado 
 
 ## Requisitos
 
+1. Forkea este repo
+2. `git clone git@github.com:$GITHUB_USERNAME/flux-workshop-nerdearla.git`
+
 -   Kubernetes - Con [colima](https://github.com/abiosoft/colima#installation) o [kind](https://kind.sigs.k8s.io/docs/user/quick-start/) está bien
 -   [kubectl](https://kubernetes.io/docs/tasks/tools/)
 -   [flux](https://fluxcd.io/docs/installation/#install-the-flux-cli)
@@ -19,11 +22,28 @@ Este repo es complementario al workshop "Introducción a GitOps con Flux", dado 
 ## Crear cluster
 
 ```bash
-colima start --kubernetes --cpu 4 --memory 8 --profile flux-demo
+colima start --kubernetes --cpu 8 --memory 8 --profile flux-demo
 
 # kind
 kind create cluster --name flux-demo
 ```
+
+<details>
+<summary>Colima output</summary>
+INFO[0000] starting colima [profile=flux-demo]          
+INFO[0000] runtime: docker+k3s                          
+INFO[0000] preparing network ...                         context=vm
+INFO[0000] creating and starting ...                     context=vm
+INFO[0024] provisioning ...                              context=docker
+INFO[0025] starting ...                                  context=docker
+INFO[0031] provisioning ...                              context=kubernetes
+INFO[0031] downloading and installing ...                context=kubernetes
+INFO[0038] loading oci images ...                        context=kubernetes
+INFO[0045] starting ...                                  context=kubernetes
+INFO[0048] updating config ...                           context=kubernetes
+INFO[0049] Switched to context "colima-flux-demo".       context=kubernetes
+INFO[0051] done      
+</details>
 
 **Check la creación del cluster**
 
@@ -114,7 +134,7 @@ clusters
 ### Suspender flux
 
 ```bash
-flux suspend source git flux-system -n flux-system
+flux suspend kustomization flux-system -n flux-system
 ```
 
 ## Approach tradicional
@@ -124,21 +144,17 @@ Crear apps con kubectl
 ```bash
 kubectl apply -R -f apps/dev
 
-kubectl get svc -n podinfo
-
 kubectl port-forward svc/frontend -n podinfo 8000:9898
 
 kubectl get all -n podinfo
 
 kubectl edit -n podinfo deploy/frontend
-
-kubectl get all -n podinfo
 ```
 
-### Suspender flux
+### Resumir flux
 
 ```bash
-flux resume source git flux-system -n flux-system
+flux resume kustomization flux-system -n flux-system
 ```
 
 ## Gitops way
@@ -201,12 +217,15 @@ flux bootstrap github \
   --repository=flux-workshop-nerdearla \
   --branch=main \
   --path=./clusters/dev \
-  --personal
+  --personal \
+  --read-write-key
 ```
 
-> Note ⚠️
+```bash
+kubectl get deploy -n flux-system
+```
 
-`git pull` para traerse los cambios que pusheo `flux`
+⚠️ `git pull` para traerse los cambios que pusheo `flux` ⚠️
 
 ### Configurar image scanning
 
@@ -219,6 +238,8 @@ flux create image repository podinfo \
 --export > ./clusters/dev/images/podinfo-registry.yaml
 ```
 
+### Image update automation
+
 #### Crear la policy a ser aplicada por Flux
 
 ```bash
@@ -228,7 +249,7 @@ flux create image policy podinfo \
 --export > ./clusters/dev/images/podinfo-policy.yaml
 ```
 
-### Image update automation
+Ejemplos: https://fluxcd.io/flux/guides/image-update/#imagepolicy-examples
 
 #### Conectar policy con app
 
@@ -263,8 +284,8 @@ flux create image update flux-system \
 ```bash
 kind delete cluster -n flux-demo
 
-colima stop --profile oreilly-kubernetes
-colima delete --profile oreilly-kubernetes
+colima stop --profile flux-demo
+colima delete --profile flux-demo
 ```
 
 #### Recrearlos
@@ -272,7 +293,7 @@ colima delete --profile oreilly-kubernetes
 ```bash
 kind create cluser -n new-flux-demo
 
-colima start --kubernetes --cpu 4 --memory 8 --profile new-oreilly-kubernetes
+colima start --kubernetes --cpu 4 --memory 8 --profile new-flux-demo
 ```
 
 #### Reboot Flux

@@ -25,7 +25,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: ghcr.io/stefanprodan/podinfo:6.5.0 # {"$imagepolicy": "flux-system:podinfo"}
+        image: ghcr.io/stefanprodan/podinfo:5.0.0
         imagePullPolicy: IfNotPresent
         ports:
         - name: http
