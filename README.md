@@ -311,8 +311,8 @@ kubeseal --fetch-cert \
 Crear Secret
 
 ```bash
-kubectl -n default create secret generic SECRET_KEY \
-    --from-literal=password=super_secret_key \
+kubectl -n default create secret generic podinfo-secret \
+    --from-literal=SECRET_KEY=super_secret_key \
     --dry-run=client \
     -o yaml > apps/dev/podinfo/secret.yaml
 ```
@@ -332,9 +332,10 @@ Agregar env en deployment.yaml y agregarlo en kustomization.yaml
 ```yaml
 # deployment.yaml
 - name: SECRET_KEY
-  valueFrom:
-      secretKeyRef:
-          key: SECRET_KEY
+    valueFrom:
+        secretKeyRef:
+            name: podinfo-secret
+            key: SECRET_KEY
 
 # kustomization.yaml
 resources:

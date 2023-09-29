@@ -53,6 +53,7 @@ spec:
         - name: SECRET_KEY
           valueFrom:
             secretKeyRef:
+              name: podinfo-secret
               key: SECRET_KEY
         livenessProbe:
           exec:
