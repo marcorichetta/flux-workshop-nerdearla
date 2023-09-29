@@ -342,7 +342,11 @@ resources:
 - ./podinfo/sealed-secret.yaml
 ```
 
-### Git Push
+<img alt="5 minutes later" src="image.png" width=400px>
+
+```bash
+kubectl get secret podinfo-secret -o jsonpath={.data.SECRET_KEY} | base64 -d
+```
 
 ### Notificaciones
 
