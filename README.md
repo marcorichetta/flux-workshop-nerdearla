@@ -1,17 +1,33 @@
 # Flux Workshop - Nerdearla 2023
 
-Este repo es complementario al workshop "Introducción a GitOps con Flux", dado en la Nerdearla 2023.
+Este repo es complementario al workshop **Introducción a GitOps con Flux**, dado en la [Introducción a GitOps con Flux](https://app.swapcard.com/event/nerdearla-2023).
 
 ## Requisitos
 
-1. Forkea este repo
-2. `git clone git@github.com:$GITHUB_USERNAME/flux-workshop-nerdearla.git`
+### Forkea este repo
+
+```bash
+# Clone
+export GITHUB_USERNAME=<user>
+
+git clone git@github.com:$GITHUB_USERNAME/flux-workshop-nerdearla.git
+
+cd flux-workshop-nerdearla
+
+# Fetch del branch init
+git fetch origin init
+
+# Merge con main
+git merge origin/init
+```
+
+### Tools
 
 -   Kubernetes - Con [colima](https://github.com/abiosoft/colima#installation) o [kind](https://kind.sigs.k8s.io/docs/user/quick-start/) está bien
 -   [kubectl](https://kubernetes.io/docs/tasks/tools/)
 -   [flux](https://fluxcd.io/docs/installation/#install-the-flux-cli)
--   [gitops](https://docs.gitops.weave.works/docs/installation/weave-gitops/) CLI - (Opcional)
 -   Github personal access token (PAT) - https://github.com/settings/tokens
+-   [gitops](https://docs.gitops.weave.works/docs/installation/weave-gitops/) CLI - (Opcional)
 
 ### Mi setup
 
