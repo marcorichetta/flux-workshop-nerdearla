@@ -294,7 +294,7 @@ flux create helmrelease sealed-secrets \
     --target-namespace=flux-system \
     --source=HelmRepository/sealed-secrets \
     --chart=sealed-secrets \
-    --chart-version=">=1.15.0-0 <2.0.0" \
+    --chart-version=">=1.15.0-0" \
     --crds=CreateReplace \
     --export > ./clusters/dev/sealed-secrets/helmrelease.yaml
 ```
